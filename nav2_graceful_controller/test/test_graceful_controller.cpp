@@ -208,6 +208,60 @@ TEST(SmoothControlLawTest, calculateRegularVelocity) {
   EXPECT_NEAR(cmd_vel.angular.z, -0.4022844, 0.0001);
 }
 
+TEST(SmoothControlLawTest, calculateBackwardVelocity) {
+  // Initialize SmoothControlLaw
+  SCLFixture scl(2.0, 1.0, 0.4, 2.0, 0.25, 0.1, 0.25, 0.75);
+
+  const bool backward = true;
+
+  // Initialize target
+  geometry_msgs::msg::Pose target;
+  target.position.x = -0.5;
+  target.position.y = 0.0;
+  target.orientation = tf2::toMsg(tf2::Quaternion({0, 0, 1}, 0.0));
+  // Initialize current
+  geometry_msgs::msg::Pose current;
+  current.position.x = 0.0;
+  current.position.y = 0.0;
+  current.orientation = tf2::toMsg(tf2::Quaternion({0, 0, 1}, 0.0));
+  // Calculate velocity
+  auto cmd_vel = scl.calculateRegularVelocity(target, current, backward);
+
+  // Check results: should be straight backward
+  EXPECT_NEAR(cmd_vel.linear.x, -0.1, 0.0001);
+  EXPECT_NEAR(cmd_vel.angular.z, 0.0, 0.0001);
+
+  // Set a new target
+  target.position.x = -0.5;
+  target.position.y = 0.1;
+  target.orientation = tf2::toMsg(tf2::Quaternion({0, 0, 1}, 0.0));
+  // Set the same current
+  current.position.x = 0.0;
+  current.position.y = 0.0;
+  current.orientation = tf2::toMsg(tf2::Quaternion({0, 0, 1}, 0.0));
+  // Calculate velocity
+  cmd_vel = scl.calculateRegularVelocity(target, current, backward);
+
+  // Check results: backward, negative angular velocity
+  EXPECT_NEAR(cmd_vel.linear.x, -0.1, 0.0001);
+  EXPECT_NEAR(cmd_vel.angular.z, -0.21746, 0.0001);
+
+  // Set a new target
+  target.position.x = -1.0;
+  target.position.y = -0.2;
+  target.orientation = tf2::toMsg(tf2::Quaternion({0, 0, 1}, 0.0));
+  // Set the same current
+  current.position.x = 0.0;
+  current.position.y = 0.0;
+  current.orientation = tf2::toMsg(tf2::Quaternion({0, 0, 1}, 0.0));
+  // Calculate velocity
+  cmd_vel = scl.calculateRegularVelocity(target, current, backward);
+
+  // Check results: backward, positive angular velocity
+  EXPECT_NEAR(cmd_vel.linear.x, -0.1, 0.0001);
+  EXPECT_NEAR(cmd_vel.angular.z, 0.10873, 0.0001);
+}
+
 TEST(SmoothControlLawTest, calculateNextPose) {
   // Initialize SmoothControlLaw
   SCLFixture scl(1.0, 10.0, 0.2, 2.0, 0.1, 0.0, 1.0, 1.0);
